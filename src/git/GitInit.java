@@ -4,8 +4,6 @@
 package git;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.RemoteAddCommand;
@@ -37,6 +35,7 @@ public class GitInit {
 	private static final String REMOTE_REPO_PATH = "git@github.com:wenthywang/jGit.git";
 
 	public static void main(String[] args) throws Exception {
+		
 		File dir = new File(PROJECT_PATH);
 
 		Git git = Git.init().setDirectory(dir).call();
@@ -48,9 +47,10 @@ public class GitInit {
 		rac.setUri(remoteUrl);
 		rac.setName("origin");
 		rac.call();
-          List<String>pushOptions=new ArrayList<String>();
-          pushOptions.add("u");
-		Iterable<PushResult> iterable = git.push().add("refs/heads/master").setRemote("origin").setPushOptions(pushOptions).call();
+
+		Iterable<PushResult> iterable = git.push().add("refs/heads/master").setAtomic(true)
+			
+			.call();
 		System.out.println("push成功！");
 
 	}
