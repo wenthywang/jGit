@@ -47,11 +47,6 @@ public class GitInit {
 		rac.setUri(remoteUrl);
 		rac.setName("origin");
 		rac.call();
-
-		Iterable<PushResult> iterable = git.push().add("refs/heads/master").setAtomic(true)
-			
-			.call();
-		System.out.println("push成功！");
-
+		Iterable<PushResult> resultIterable = git.push().call();
 	}
 }
