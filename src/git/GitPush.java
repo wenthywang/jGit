@@ -34,9 +34,9 @@ public class GitPush {
 	// 工程所在目录
 	private static final String PROJECT_PATH = LocalEnv.path;
 	// 工程名称
-	private static final String PROJECT_NAME = Modules.project.jiaxin_gw_statistics.name();
+	private static final String PROJECT_NAME = Modules.project.jiaxin_web_devcenter.name();
 	// 提交备注
-	private static final String COMMIT_MSG = "关联im会话添加微信个人号的渠道设置";
+	private static final String COMMIT_MSG = "更新满意度添加suborgid";
 
 	public static void main(String[] args) throws Exception {
 		String filePath = PROJECT_PATH + PROJECT_NAME;
@@ -56,12 +56,14 @@ public class GitPush {
 			System.out.println("修改的文件列表：");
 			for (String s : m) {
 				// 过滤dubbox和log4j文件 不提交
-				if (s.contains("x_dubbox.xml") || s.contains("log4j.xml")) {
-					continue;
+				if(!PROJECT_NAME.equals(Modules.project.jiaxin_gw_dataconf.name())){
+					if (s.contains("x_dubbox.xml") || s.contains("log4j.xml")) {
+						continue;
+					}
 				}
 				System.out.println(s);
 				finalFile.add(s);
-				git.add().addFilepattern(s).call();
+				git.add().addFilepattern(s).setUpdate(true).call();
 			}
 		}
 

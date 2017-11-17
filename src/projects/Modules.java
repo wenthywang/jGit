@@ -3,6 +3,7 @@ package projects;
 public class Modules {
 
 	public enum project {
+		jiaxin_lib_core,
 		jiaxin_gw_archive,
 		jiaxin_gw_auth, 
 		jiaxin_gw_bill, 
@@ -31,6 +32,7 @@ public class Modules {
 		jiaxin_gw_order, 
 		jiaxin_gw_schedule,
 		jiaxin_gw_robot,
-		jiaxin_gw_rest
+		jiaxin_gw_rest,
+		jiaxin_im_server
 	};
 }

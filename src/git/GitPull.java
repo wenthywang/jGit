@@ -1,4 +1,5 @@
 /**
+
  * Copyright(c) Guangzhou JiaxinCloud Science & Technology Ltd. 
  */
 package git;
@@ -6,7 +7,11 @@ package git;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.Status;
@@ -38,6 +43,8 @@ import conf.LocalEnv;
  */
 public class GitPull {
 
+	private static ExecutorService executor = Executors.newFixedThreadPool(20);
+	
 	public static void main(String[] args) throws Exception {
 		File dir = new File(LocalEnv.path);
 		// 过滤佳信的工程出来
@@ -54,15 +61,23 @@ public class GitPull {
 		});
 
 		for (int i = 0; i < jiaxinProjects.length; i++) {
-			String projectName = jiaxinProjects[i];
+			final String projectName = jiaxinProjects[i];
 			// 不需要demo project 的更新
-			if (projectName.equals("jiaxin_demo_projects")) {
+			if ("jiaxin_demo_projects".equals(projectName)) {
 				continue;
 			}
-			gitFetch(projectName);
+			executor.execute(()->{
+				gitFetch(projectName);
+			});
+			
+			}
+		//上面提交的任务 等待执行完 再 shutdown
+		//shutdown只是拒绝新的任务
+		//执行到这里已经没有新的任务添加
+		//所以这个位置关闭是正常的
+		executor.shutdown();
 		}
 
-	}
 
 	/**
 	 * 调用git fetch gitRebase 合并代码
@@ -72,17 +87,31 @@ public class GitPull {
 	 */
 	private static void gitFetch(String projectName) {
 		System.out.println("------------------------------------");
-		System.out.println(projectName + "......." + "start fetch......");
+		System.out.println("["+projectName+"]" + "......." + "start fetch......");
 		String filePath = LocalEnv.path + projectName;
 		File f = new File(filePath);
 		Git git = null;
 		try {
 			git = Git.open(f);
 		} catch (IOException e) {
-			System.out.println("git  init  error");
+			System.out.println("["+projectName+"]"+"git  init  error");
 			e.printStackTrace();
 		}
-
+		
+		//checkout 修改过的这些配置文件 避免冲突
+    try {
+    	List<String>paths=new ArrayList<String>();
+    	paths.add("WebRoot/META-INF/x_config.xml");
+    	paths.add("WebRoot/META-INF/x_dubbox.xml");
+    	paths.add("WebRoot/META-INF/log4j.xml");
+		git.checkout().addPaths(paths).call();
+	} catch (GitAPIException e3) {
+		// TODO Auto-generated catch block
+		e3.printStackTrace();
+	}
+		
+		
+		
 		Status status = null;
 		try {
 			status = git.status().call();
@@ -107,45 +136,45 @@ public class GitPull {
 		try {
 			revCommit = git.stashCreate().call();
 		} catch (GitAPIException e) {
-			System.out.println("git stash  error");
+			System.out.println("["+projectName+"]"+ " git stash  error");
 			e.printStackTrace();
 		}
 		if (revCommit != null) {
-			System.out.println("stash 成功");
+			System.out.println("["+projectName+"]"+"stash 成功");
 		} else {
-			System.out.println("没有做任何修改，不用stash");
+			System.out.println("["+projectName+"]"+"没有做任何修改，不用stash");
 		}
 		FetchResult fr = null;
 		try {
 			fr = git.fetch().call();
 		} catch (GitAPIException e) {
-			System.out.println("git fetch error");
+			System.out.println("["+projectName+"]"+"git fetch error");
 			e.printStackTrace();
 		}
 
 		if (fr != null) {
 			String msg = fr.getMessages();
 			if (!StringUtils.isEmptyOrNull(msg)) {
-				System.out.println("update->" + fr.getTrackingRefUpdates().size());
-				System.out.println("message->" + msg);
+				System.out.println("["+projectName+"]"+"update->" + fr.getTrackingRefUpdates().size());
+				System.out.println("["+projectName+"]"+"message->" + msg);
 			}
 		}
 		try {
 			git.rebase().setUpstream("refs/remotes/origin/master").call();
 		} catch (GitAPIException e1) {
-			System.out.println("git rebase error！");
+			System.out.println("["+projectName+"]"+"git rebase error！");
 			e1.printStackTrace();
 		}
 		if (revCommit != null) {
 			try {
 				git.stashApply().call();
 			} catch (GitAPIException e) {
-				System.out.println("stash pop error,产生冲突了！");
+				System.out.println("["+projectName+"]"+"stash pop error,产生冲突了！");
 				e.printStackTrace();
 			}
 		}
-		System.out.println("merge 成功");
-		System.out.println(projectName + "......." + "end fetch......");
+		System.out.println("["+projectName+"]"+"merge 成功");
+		System.out.println("["+projectName+"]" + "......." + "end fetch......");
 	}
 
 }
